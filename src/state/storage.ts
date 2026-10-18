@@ -194,3 +194,4 @@ export function clearSessionStorage(): void {
     // Ignore storage errors
   }
 }
+

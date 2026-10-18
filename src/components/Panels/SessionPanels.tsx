@@ -659,3 +659,4 @@ export const SessionPanels: React.FC<SessionPanelsProps> = ({
     </div>
   );
 };
+
