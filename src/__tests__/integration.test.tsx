@@ -168,3 +168,4 @@ describe('Comprehensive Integration & Regression Suite (Etapa 9)', () => {
     expect(screen.getByTestId('hud-balance')).toHaveTextContent('1010 fichas');
   });
 });
+
