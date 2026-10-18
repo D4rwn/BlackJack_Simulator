@@ -55,6 +55,47 @@ export type SurrenderRule = 'none' | 'late';
 
 export type DoubleRestrictionRule = 'any' | '9-11' | '10-11';
 
+export type ChipDenomination = 1 | 5 | 25 | 100 | 500;
+
+export interface ChipDefinition {
+  denomination: ChipDenomination;
+  label: string;
+  primaryColor: string;
+  accentColor: string;
+  textColor: string;
+}
+
+export interface ChipBreakdownItem {
+  denomination: ChipDenomination;
+  count: number;
+}
+
+export interface ActionAvailability {
+  enabled: boolean;
+  reason?: string;
+}
+
+export interface AvailableActionsMap {
+  deal: ActionAvailability;
+  hit: ActionAvailability;
+  stand: ActionAvailability;
+  double: ActionAvailability;
+  split: ActionAvailability;
+  surrender: ActionAvailability;
+  insurance: ActionAvailability;
+}
+
+export interface CommittedChipsSummary {
+  availableBalance: number;
+  stagedBet: number;
+  activeMainBets: number;
+  additionalSplitBets: number;
+  additionalDoubleBets: number;
+  insuranceBet: number;
+  totalCommittedOnTable: number;
+  netSessionProfit: number;
+}
+
 export interface TableRules {
   /** Number of 52-card decks in the shoe (1 to 8) */
   deckCount: number;
@@ -201,4 +242,3 @@ export interface GameState {
 }
 
 export type RandomSource = () => number;
-

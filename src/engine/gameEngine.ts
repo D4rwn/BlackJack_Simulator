@@ -1,4 +1,22 @@
 import {
+  addChipToBet,
+  calculateHandPayout,
+  calculateInsurancePayout,
+  CHIP_DEFINITIONS,
+  CHIP_DENOMINATIONS,
+  clearStagedBet,
+  decomposeAmountToChips,
+  doubleStagedBet,
+  getAvailableActions,
+  getCommittedChipsSummary,
+  halfStagedBet,
+  maxStagedBet,
+  refillBalance,
+  removeChipFromBet,
+  setStagedBet,
+  validateBetForDeal,
+} from './accounting';
+import {
   createShoe,
   defaultRandomSource,
   drawCardFromShoe,
@@ -25,6 +43,25 @@ import {
   RoundSummary,
   TableRules,
 } from './types';
+
+export {
+  addChipToBet,
+  calculateHandPayout,
+  calculateInsurancePayout,
+  CHIP_DEFINITIONS,
+  CHIP_DENOMINATIONS,
+  clearStagedBet,
+  decomposeAmountToChips,
+  doubleStagedBet,
+  getAvailableActions,
+  getCommittedChipsSummary,
+  halfStagedBet,
+  maxStagedBet,
+  refillBalance,
+  removeChipFromBet,
+  setStagedBet,
+  validateBetForDeal,
+};
 
 export interface CreateGameOptions {
   initialBalance?: number;
@@ -75,57 +112,6 @@ export function createInitialGameState(
 }
 
 /**
- * Calculates the payout (total returned to player balance) and net profit for a resolved hand.
- * Since the bet was already deducted from balance when placed/doubled/split:
- * - Win (1:1): payout = bet * 2, netProfit = +bet
- * - Natural Blackjack (3:2): payout = bet * 2.5, netProfit = +bet * 1.5
- * - Natural Blackjack (6:5): payout = bet * 2.2, netProfit = +bet * 1.2
- * - Push: payout = bet, netProfit = 0
- * - Surrender: payout = bet * 0.5, netProfit = -bet * 0.5
- * - Lose / Bust: payout = 0, netProfit = -bet
- */
-export function calculateHandPayout(
-  bet: number,
-  outcome: HandOutcome,
-  rules: Pick<TableRules, 'blackjackPayout'>
-): { payout: number; netProfit: number } {
-  switch (outcome) {
-    case 'blackjack': {
-      const multiplier = rules.blackjackPayout === '3:2' ? 1.5 : 1.2;
-      const netProfit = Number((bet * multiplier).toFixed(2));
-      return {
-        payout: Number((bet + netProfit).toFixed(2)),
-        netProfit,
-      };
-    }
-    case 'win':
-      return {
-        payout: bet * 2,
-        netProfit: bet,
-      };
-    case 'push':
-      return {
-        payout: bet,
-        netProfit: 0,
-      };
-    case 'surrender': {
-      const returned = Number((bet / 2).toFixed(2));
-      return {
-        payout: returned,
-        netProfit: Number((-returned).toFixed(2)),
-      };
-    }
-    case 'lose':
-    case 'bust':
-    default:
-      return {
-        payout: 0,
-        netProfit: -bet,
-      };
-  }
-}
-
-/**
  * Compares a single player hand against the final dealer hand to determine its outcome.
  */
 export function evaluateHandOutcome(
@@ -166,7 +152,7 @@ export function evaluateHandOutcome(
 
 /**
  * Reveals the dealer's hole card, executes deterministic dealer draws if needed,
- * and settles all hands and insurance bets exactly once.
+ * and settles all hands and insurance bets_exactly once.
  */
 export function resolveDealerTurnAndSettle(state: GameState): GameState {
   if (
@@ -206,30 +192,22 @@ export function resolveDealerTurnAndSettle(state: GameState): GameState {
 
   const finalDealerScore = calculateHandScore(revealedDealerCards, false);
 
-  // Settle insurance if taken
+  // Settle insurance if taken using accounting module
   let totalPayout = 0;
   let insuranceState = { ...state.insurance };
 
   if (insuranceState.taken && insuranceState.bet > 0) {
-    if (finalDealerScore.isNaturalBlackjack) {
-      // Insurance pays 2:1 profit + returns the insurance bet (total 3x insurance bet)
-      const insPayout = Number((insuranceState.bet * 3).toFixed(2));
-      const insProfit = Number((insuranceState.bet * 2).toFixed(2));
-      insuranceState = {
-        ...insuranceState,
-        outcome: 'win',
-        payout: insPayout,
-        netProfit: insProfit,
-      };
-      totalPayout += insPayout;
-    } else {
-      insuranceState = {
-        ...insuranceState,
-        outcome: 'lose',
-        payout: 0,
-        netProfit: -insuranceState.bet,
-      };
-    }
+    const insResult = calculateInsurancePayout(
+      insuranceState.bet,
+      finalDealerScore.isNaturalBlackjack
+    );
+    insuranceState = {
+      ...insuranceState,
+      outcome: insResult.outcome,
+      payout: insResult.payout,
+      netProfit: insResult.netProfit,
+    };
+    totalPayout = Number((totalPayout + insResult.payout).toFixed(2));
   }
 
   // Settle each player hand
@@ -379,17 +357,9 @@ export function startRound(
   }
 
   const bet = betAmount !== undefined ? betAmount : state.stagedBet;
-
-  if (typeof bet !== 'number' || !Number.isFinite(bet) || bet <= 0) {
-    throw new Error('Bet amount must be a positive number.');
-  }
-  if (bet < state.rules.minBet || bet > state.rules.maxBet) {
-    throw new Error(
-      `Bet must be between ${state.rules.minBet} and ${state.rules.maxBet}.`
-    );
-  }
-  if (bet > state.balance) {
-    throw new Error('Bet exceeds available balance.');
+  const validation = validateBetForDeal(bet, state.balance, state.rules);
+  if (!validation.valid) {
+    throw new Error(validation.reason ?? 'Invalid bet.');
   }
 
   let currentShoe = ensureShoeReadyForNewRound(state.shoe, state.rules, rng);
