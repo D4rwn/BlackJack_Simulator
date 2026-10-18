@@ -214,3 +214,4 @@ describe('Core Blackjack Engine & State Machine (Sections 13.3, 13.4, 13.5)', ()
     expect(nextReady.phase).toBe('BETTING');
   });
 });
+

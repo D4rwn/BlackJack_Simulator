@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    container_name: blackjack-simulator-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    restart: unless-stopped
+
+  test:
+    build:
+      context: .
+      target: test
+    container_name: blackjack-simulator-test
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=test
+
+  prod:
+    build:
+      context: .
+      target: prod
+    container_name: blackjack-simulator-prod
+    ports:
+      - "8080:80"
+    profiles:
+      - prod
+    restart: unless-stopped
+

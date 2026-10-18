@@ -229,3 +229,4 @@ export function canTakeInsurance(state: GameState): {
   }
   return { eligible: true, maxInsuranceBet };
 }
+
