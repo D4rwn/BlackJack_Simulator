@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   addChipToBet,
   clearStagedBet,
@@ -26,19 +26,34 @@ import {
   RandomSource,
   TableRules,
 } from '../engine/types';
+import {
+  clearSessionStorage,
+  loadSessionFromStorage,
+  saveSessionToStorage,
+} from './storage';
 
 export interface UseBlackjackGameOptions {
   initialState?: GameState;
   initialBalance?: number;
   initialRules?: Partial<TableRules>;
   rng?: RandomSource;
+  persistSession?: boolean;
   onStateChange?: (nextState: GameState) => void;
 }
 
 export function useBlackjackGame(options: UseBlackjackGameOptions = {}) {
+  const shouldPersist =
+    options.persistSession ?? !options.initialState;
+
   const [state, setStateInternal] = useState<GameState>(() => {
     if (options.initialState) {
       return options.initialState;
+    }
+    if (shouldPersist) {
+      const restored = loadSessionFromStorage();
+      if (restored) {
+        return restored;
+      }
     }
     return createInitialGameState({
       initialBalance: options.initialBalance,
@@ -46,6 +61,12 @@ export function useBlackjackGame(options: UseBlackjackGameOptions = {}) {
       rng: options.rng,
     });
   });
+
+  useEffect(() => {
+    if (shouldPersist) {
+      saveSessionToStorage(state);
+    }
+  }, [state, shouldPersist]);
 
   const updateState = useCallback(
     (updater: (prev: GameState) => GameState) => {
@@ -176,8 +197,7 @@ export function useBlackjackGame(options: UseBlackjackGameOptions = {}) {
 
         if (
           typeof newStartingBalance === 'number' &&
-          newStartingBalance > 0 &&
-          newStartingBalance !== prev.initialBalance
+          newStartingBalance > 0
         ) {
           return createInitialGameState({
             initialBalance: newStartingBalance,
@@ -214,6 +234,9 @@ export function useBlackjackGame(options: UseBlackjackGameOptions = {}) {
 
   const handleResetSession = useCallback(
     (startingBalance?: number, customRules?: Partial<TableRules>) => {
+      if (shouldPersist) {
+        clearSessionStorage();
+      }
       updateState((prev) =>
         createInitialGameState({
           initialBalance: startingBalance ?? prev.initialBalance,
@@ -222,7 +245,7 @@ export function useBlackjackGame(options: UseBlackjackGameOptions = {}) {
         })
       );
     },
-    [updateState, options.rng]
+    [updateState, options.rng, shouldPersist]
   );
 
   return {
