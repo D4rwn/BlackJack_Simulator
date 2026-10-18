@@ -125,3 +125,4 @@ describe('Session Configuration, Statistics, History & Persistence (Etapa 8)', (
     expect(screen.getByTestId('nav-history')).toHaveTextContent('Historial (0)');
   });
 });
+
