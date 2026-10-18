@@ -598,3 +598,4 @@ export function refillBalance(state: GameState, amount: number): GameState {
       : 'El saldo sigue siendo inferior a la apuesta mínima.',
   };
 }
+
