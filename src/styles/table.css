@@ -406,8 +406,21 @@ body,
   justify-content: space-between;
   padding: 0.4rem 0.45rem;
   color: var(--ink-dark);
-  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-  animation: cardDealIn 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease;
+  will-change: transform, opacity;
+  transform-origin: center center;
+}
+
+.playing-card.card-deal {
+  animation: cardDealIn 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.playing-card.card-hit {
+  animation: cardHitIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.playing-card.card-flip-reveal {
+  animation: cardFlipReveal 0.52s cubic-bezier(0.2, 0.85, 0.3, 1) both;
 }
 
 .cards-fan .playing-card + .playing-card {
@@ -585,6 +598,14 @@ body,
   padding: 0.5rem 0.85rem;
   box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.45);
   position: relative;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.betting-circle.has-chips {
+  border-style: solid;
+  border-color: rgba(244, 214, 134, 0.85);
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 16px rgba(224, 184, 76, 0.35);
+  animation: bettingCircleGlow 2.5s ease-in-out infinite alternate;
 }
 
 .chip-stacks-row {
@@ -617,13 +638,30 @@ body,
   font-weight: 900;
   font-size: 0.82rem;
   cursor: pointer;
-  transition: transform 0.14s ease, filter 0.14s ease;
+  user-select: none;
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease, filter 0.16s ease;
 }
 
 .casino-chip.chip-small {
   width: 38px;
   height: 38px;
   font-size: 0.72rem;
+}
+
+.casino-chip.betting-chip-in-stack {
+  animation: chipDropIn 0.38s cubic-bezier(0.18, 0.89, 0.32, 1.25) both;
+  animation-delay: var(--chip-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+.chip-rack .casino-chip:hover:not(:disabled) {
+  transform: translateY(-5px) scale(1.08);
+  box-shadow: 0 8px 0 #141a17, 0 10px 16px rgba(0, 0, 0, 0.45);
+}
+
+.chip-rack .casino-chip:active:not(:disabled) {
+  transform: translateY(2px) scale(0.96);
+  box-shadow: 0 1px 0 #141a17, 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .casino-chip:hover:not(:disabled) {
@@ -916,14 +954,91 @@ body,
   font-weight: 800;
 }
 
+/* Card dealing from the dealer shoe (top right) */
 @keyframes cardDealIn {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(-24px) scale(0.92);
+    transform: translate3d(140px, -200px, 0) rotate(16deg) scale(0.65);
+    filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.6));
   }
-  to {
+  70% {
+    opacity: 1;
+    transform: translate3d(-4px, 3px, 0) rotate(-1.5deg) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    filter: var(--card-shadow);
+  }
+}
+
+/* Card hit (extra card requested) */
+@keyframes cardHitIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(90px, -140px, 0) rotate(12deg) scale(0.75);
+    filter: drop-shadow(0 16px 16px rgba(0, 0, 0, 0.5));
+  }
+  75% {
+    opacity: 1;
+    transform: translate3d(-3px, 2px, 0) rotate(-1deg) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    filter: var(--card-shadow);
+  }
+}
+
+/* 3D flip when dealer hole card is revealed */
+@keyframes cardFlipReveal {
+  0% {
+    opacity: 0.8;
+    transform: perspective(600px) rotateY(90deg) scale(0.95);
+    filter: brightness(0.85);
+  }
+  60% {
+    opacity: 1;
+    transform: perspective(600px) rotateY(-8deg) scale(1.04);
+    filter: brightness(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(600px) rotateY(0deg) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Chips dropping onto the table into the betting circle */
+@keyframes chipDropIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px) scale(1.25);
+    filter: drop-shadow(0 18px 12px rgba(0, 0, 0, 0.6));
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(4px) scale(0.96);
+  }
+  85% {
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: none;
+  }
+}
+
+/* Subtle glow pulse when chips are placed in betting circle */
+@keyframes bettingCircleGlow {
+  0% {
+    border-color: rgba(224, 184, 76, 0.7);
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 12px rgba(224, 184, 76, 0.25);
+  }
+  100% {
+    border-color: rgba(250, 225, 145, 0.95);
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 22px rgba(224, 184, 76, 0.45);
   }
 }
 
