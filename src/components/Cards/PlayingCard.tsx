@@ -4,6 +4,10 @@ import { Card, PublicCard, Suit } from '../../engine/types';
 export interface PlayingCardProps {
   card: Card | PublicCard;
   index?: number;
+  dealDelay?: number;
+  isHit?: boolean;
+  isRevealedHoleCard?: boolean;
+  style?: React.CSSProperties;
 }
 
 function SuitIcon({ suit, className }: { suit: Suit; className?: string }) {
@@ -43,11 +47,23 @@ const SUIT_NAMES_ES: Record<Suit, string> = {
   clubs: 'Tréboles',
 };
 
-export const PlayingCard: React.FC<PlayingCardProps> = ({ card }) => {
+export const PlayingCard: React.FC<PlayingCardProps> = ({
+  card,
+  dealDelay,
+  isHit = false,
+  isRevealedHoleCard = false,
+  style,
+}) => {
+  const inlineStyle: React.CSSProperties = {
+    animationDelay: dealDelay ? `${dealDelay}ms` : undefined,
+    ...style,
+  };
+
   if (!card.faceUp || !card.rank || !card.suit) {
     return (
       <div
         className="playing-card face-down"
+        style={inlineStyle}
         data-testid="card-face-down"
         aria-label="Carta oculta del crupier"
       >
@@ -61,9 +77,16 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ card }) => {
   const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
   const isCourt = card.rank === 'J' || card.rank === 'Q' || card.rank === 'K';
 
+  const animationClass = isRevealedHoleCard
+    ? 'card-flip-reveal'
+    : isHit
+    ? 'card-hit'
+    : 'card-deal';
+
   return (
     <div
-      className={`playing-card ${isRed ? 'suit-red' : 'suit-black'}`}
+      className={`playing-card ${isRed ? 'suit-red' : 'suit-black'} ${animationClass}`}
+      style={inlineStyle}
       data-testid={`card-${card.rank}-${card.suit}`}
       aria-label={`${card.rank} de ${SUIT_NAMES_ES[card.suit]}`}
     >
@@ -90,4 +113,3 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({ card }) => {
     </div>
   );
 };
-

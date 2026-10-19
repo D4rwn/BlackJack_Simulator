@@ -20,10 +20,10 @@ export const BettingZone: React.FC<BettingZoneProps> = ({
 
   return (
     <div className="betting-spot-wrapper" data-testid="betting-zone">
-      <div className="betting-circle">
+      <div className={`betting-circle ${chipBreakdown.length > 0 ? 'has-chips' : ''}`}>
         {chipBreakdown.length > 0 ? (
           <div className="chip-stacks-row">
-            {chipBreakdown.map((item) => {
+            {chipBreakdown.map((item, stackIdx) => {
               const visibleChipsCount = Math.min(item.count, 5);
               return (
                 <div
@@ -42,6 +42,10 @@ export const BettingZone: React.FC<BettingZoneProps> = ({
                       size="small"
                       disabled={!canEdit}
                       onClick={onRemoveChip}
+                      className="betting-chip-in-stack"
+                      style={{
+                        animationDelay: `${(stackIdx * 2 + idx) * 35}ms`,
+                      }}
                     />
                   ))}
                 </div>
@@ -75,4 +79,3 @@ export const BettingZone: React.FC<BettingZoneProps> = ({
     </div>
   );
 };
-

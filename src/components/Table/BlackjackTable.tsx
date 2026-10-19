@@ -247,9 +247,21 @@ export const BlackjackTable: React.FC<BlackjackTableProps> = ({
 
           <div className="cards-fan" data-testid="dealer-cards">
             {publicDealer.cards.length > 0 ? (
-              publicDealer.cards.map((card, idx) => (
-                <PlayingCard key={card.id} card={card} index={idx} />
-              ))
+              publicDealer.cards.map((card, idx) => {
+                const isDealerHit = idx >= 2;
+                const isRevealedHoleCard = idx === 1 && card.faceUp;
+                const dealDelay = isDealerHit ? 0 : idx === 0 ? 160 : 480;
+                return (
+                  <PlayingCard
+                    key={card.id}
+                    card={card}
+                    index={idx}
+                    dealDelay={dealDelay}
+                    isHit={isDealerHit}
+                    isRevealedHoleCard={isRevealedHoleCard}
+                  />
+                );
+              })
             ) : (
               <span
                 style={{
@@ -298,6 +310,10 @@ export const BlackjackTable: React.FC<BlackjackTableProps> = ({
               const isActive =
                 state.phase === 'PLAYER_TURN' && state.activeHandIndex === idx;
               const score = calculateHandScore(hand.cards, hand.isFromSplit);
+              const isInitialRoundHand =
+                state.playerHands.length === 1 &&
+                hand.cards.length === 2 &&
+                hand.actionsTaken.length === 0;
 
               return (
                 <div
@@ -334,9 +350,19 @@ export const BlackjackTable: React.FC<BlackjackTableProps> = ({
                   </div>
 
                   <div className="cards-fan">
-                    {hand.cards.map((card, cIdx) => (
-                      <PlayingCard key={card.id} card={card} index={cIdx} />
-                    ))}
+                    {hand.cards.map((card, cIdx) => {
+                      const dealDelay = isInitialRoundHand ? (cIdx === 0 ? 0 : 320) : 0;
+                      const isHit = cIdx >= 2 || hand.actionsTaken.includes('hit') || hand.isFromSplit;
+                      return (
+                        <PlayingCard
+                          key={card.id}
+                          card={card}
+                          index={cIdx}
+                          dealDelay={dealDelay}
+                          isHit={isHit}
+                        />
+                      );
+                    })}
                   </div>
 
                   <div className="hand-meta-row">

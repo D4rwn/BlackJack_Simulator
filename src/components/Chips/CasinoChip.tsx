@@ -8,6 +8,8 @@ export interface CasinoChipProps {
   disabled?: boolean;
   size?: 'normal' | 'small';
   title?: string;
+  style?: React.CSSProperties;
+  className?: string;
 }
 
 export const CasinoChip: React.FC<CasinoChipProps> = ({
@@ -16,6 +18,8 @@ export const CasinoChip: React.FC<CasinoChipProps> = ({
   disabled = false,
   size = 'normal',
   title,
+  style,
+  className = '',
 }) => {
   const def =
     CHIP_DEFINITIONS.find((c) => c.denomination === denomination) ??
@@ -24,10 +28,11 @@ export const CasinoChip: React.FC<CasinoChipProps> = ({
   return (
     <button
       type="button"
-      className={`casino-chip ${size === 'small' ? 'chip-small' : ''}`}
+      className={`casino-chip ${size === 'small' ? 'chip-small' : ''} ${className}`}
       style={{
         backgroundColor: def.primaryColor,
         color: def.textColor,
+        ...style,
       }}
       disabled={disabled}
       onClick={() => onClick?.(denomination)}
@@ -44,4 +49,3 @@ export const CasinoChip: React.FC<CasinoChipProps> = ({
     </button>
   );
 };
-
